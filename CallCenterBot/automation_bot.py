@@ -287,7 +287,7 @@ def switch_to_vicidial_iframe():
     except Exception as e:
         print("Error switching to vicidial_iframe:", str(e))
 
-def handle_keyword_actions(keyword_list_name):
+def handle_keyword_actions(iframe_keywords,keyword_list_name):
     switch_to_vicidial_iframe()
     button_selector = external_keyword_lists[keyword_list_name]["button_selector"]
     link_selector = external_keyword_lists[keyword_list_name]["link_selector"]
@@ -295,7 +295,7 @@ def handle_keyword_actions(keyword_list_name):
     try:
         textarea = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, '//*[@id="comments"]')))
-        textarea.send_keys("This is a test comment.")
+        textarea.send_keys(iframe_keywords)
 
         button_element = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//img[@alt='Transfer - Conference']")))
@@ -416,18 +416,21 @@ if __name__ == "__main__":
             # Handle external keyword lists
             driver.switch_to.default_content()
             iframe_keywords = extract_keywords_from_div()
+            print(f"-----------upper>>>> {iframe_keywords}")
             if iframe_keywords.strip():
                 # Call stated
 
                 while True:
                     iframe_keywords = extract_keywords_from_div()
+                    print(f"-----------lower>>>> {iframe_keywords}")
+
                     detected_list = handle_external_keyword_lists(driver, iframe_keywords=iframe_keywords)
                     check_and_click_start_button()
                     print(detected_list)
                     # print(detected_list[0])
                     try:
                         if detected_list[0]=="external_listXfer":
-                            handle_keyword_actions(detected_list[0])
+                            handle_keyword_actions(iframe_keywords,detected_list[0])
                             greetings_audio=False
                             purpose_audio=False
                             break
