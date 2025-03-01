@@ -15,7 +15,8 @@ import os
 import datetime
 from datetime import timezone
 import time
-from start_call import main
+import subprocess
+# from start_call import main
 import asyncio
 # import pyautogui
 
@@ -363,6 +364,22 @@ def handle_keyword_actions(iframe_keywords,keyword_list_name):
         print(f"Error performing actions for keyword keyword in list '{keyword_list_name}': {str(e)}")
         # print(f"Error performing actions for keyword '{keyword}' in list '{keyword_list_name}': {str(e)}")
     
+def clear_div():
+
+    # Wait for iframe and switch to it
+    iframe_hello_div = wait.until(EC.presence_of_element_located((By.ID, "iframe_hello")))
+    driver.switch_to.frame(iframe_hello_div)
+
+    # Locate elements
+    results_div = wait.until(EC.presence_of_element_located((By.ID, "results")))
+    final_span = results_div.find_element(By.ID, "final_span")
+    interim_span = results_div.find_element(By.ID, "interim_span")
+
+    # Clear text using JavaScript
+    driver.execute_script("arguments[0].textContent = '';", final_span)
+    driver.execute_script("arguments[0].textContent = '';", interim_span)
+
+
 if __name__ == "__main__":
     print('hello')
     options = webdriver.ChromeOptions()
@@ -372,16 +389,19 @@ if __name__ == "__main__":
     # Auto Allow Microphone
     options.add_argument("use-fake-device-for-media-stream"); # this argument for accepting permissions
     options.add_argument("use-fake-ui-for-media-stream")
-
-    driver_path = "/home/noorulnisa/Public/MiniProjects/CallCenterBot/chromedriver"
-    service = Service(driver_path)
-    driver = webdriver.Chrome(options=options, service=service)
+    # options.debugger_address = "127.0.0.1:9222" 
+    options.add_experimental_option("debuggerAddress","localhost:9222")
+    driver = webdriver.Chrome(options=options)
+    # driver_path = "/home/noorulnisa/Public/MiniProjects/CallCenterBot/chromedriver"
+    # service = Service(driver_path)
+    # driver = webdriver.Chrome(options=options, service=service)
 
     # to maximize the browser window
     driver.maximize_window()
 
     # Open the website
     driver.get("http://localhost/AutoCallResponder/")
+    # driver.get("http://dialer.callonesolution.com/vicidial/welcome.php")
     handle_ssl_warning()
     wait = WebDriverWait(driver, 10)
 
@@ -414,19 +434,39 @@ if __name__ == "__main__":
         start_checking_microphone_thread.start()
 
         while True:
-
+            greetings_audio = False
             # Handle external keyword lists
             driver.switch_to.default_content()
             iframe_keywords = extract_keywords_from_div()
             print(f"-----------upper>>>> {iframe_keywords}")
+            print("printing Driver--------------------")
+            print(driver)
+            print(f"{driver.session_id}")
             if iframe_keywords.strip():
                 # Call stated
                 print(f"-----------First loop>>>> {iframe_keywords}")
                 detected_list = handle_external_keyword_lists(driver, iframe_keywords=iframe_keywords)
+                # time.sleep(1)
+                # clear_div()
+
                 if detected_list:
-                    # extracted = os.system('python 2_start_call.py')
+                    print('inside main')
+                    # extracted = os.system(f'python 2_start_call.py {driver.session_id} {driver.command_executor._url}')
                     # asyncio.create_task(main())
-                    main(driver)
+                    # main(driver)
+
+                    # print(f"the script is process and extracted word: {extracted}")
+                
+
+                # while True:
+                #     iframe_keywords = extract_keywords_from_div()
+                #     
+                if detected_list:
+                    print('inside main')
+                    # extracted = os.system(f'python start_call.py "{driver.session_id}"')
+                    subprocess.run(["python", "start_call.py"])
+                    # asyncio.create_task(main())
+                    # main(driver)
                     # print(f"the script is process and extracted word: {extracted}")
                 
 
@@ -473,10 +513,16 @@ if __name__ == "__main__":
                 #         break
 
             # Wait for a few seconds before checking again
-            time.sleep(4)
+            time.sleep(1)
         
     except KeyboardInterrupt:
         print("Script terminated by user")
 
     finally:
         driver.quit()
+
+# chrome --remote-debugging-port=9222 --user-data-dir="/home/noorulnisa/Public/MiniProjects/CallCenterBot/1_hello.py"
+# google-chrome --remote-debugging-port=9222 --user-data-dir="/home/noorulnisa/Public/MiniProjects/CallCenterBot/1_hello.py"
+# google-chrome --remote-debugging-port=9222 --disable-gpu --user-data-dir="/home/noorulnisa/Public/MiniProjects/CallCenterBot/1_hello.py"
+
+# google-chrome --remote-debugging-port=9222 --user-data-dir="/tmp/chrome_debug_profile"

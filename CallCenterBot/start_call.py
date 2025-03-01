@@ -2,6 +2,7 @@ import websockets
 import asyncio
 import base64
 import json
+import sys
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -13,6 +14,7 @@ from selenium.common.exceptions import NoSuchElementException
 from threading import Thread, Lock
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.remote.webdriver import WebDriver
 import logging    
 import inspect    
 import re    
@@ -144,6 +146,7 @@ URL = "wss://api.assemblyai.com/v2/realtime/ws?sample_rate=16000"
 driver = ''
 purpose_audio = ""
 call_ended = False
+
 def extracted_print(data):
     for i in range(10):
         print(data)
@@ -376,20 +379,38 @@ async def send_receive():
       
 
         async def receive():
+            start_time = time.time()
+            is_detected = False
             while True:
                 try:
                     result_str = await _ws.recv()
                     if json.loads(result_str)['message_type'] == 'FinalTranscript':
+                        is_detected = True
+                        print(is_detected)
                         # print(json.loads(result_str)['text'])
                         words = json.loads(result_str)['text']
                         print(words)
                         # extracted_print(words)
                         call_ended = handle_external_keyword_lists(driver, words)
-                        # return words
+                        is_detected = False
+                        print(is_detected)
+                        start_time = time.time()
 
                         if call_ended:
                             print("Call ended. Stopping execution.")
                             return "stop"
+                        
+                    # elapsed_time = time.time() - start_time  # Calculate elapsed time
+                    # print(elapsed_time)
+                    # if elapsed_time >= 7 and is_detected == False:
+                    #     print("%%%%%  call hangup  %%%%")
+                    #     switch_to_vicidial_iframe()
+                    #     button = driver.find_element(By.CSS_SELECTOR, "#MainTable > tbody > tr:nth-child(3) > td:nth-child(1) > font > center:nth-child(6) > a:nth-child(17) > img")
+                    #     button.click()
+                    #     # link = driver.find_element(By.CSS_SELECTOR, detected_list[1])
+                    #     # actions = ActionChains(driver)
+                    #     # actions.double_click(link).perform()
+                    #     return "stop"
                         
 
                 except websockets.exceptions.ConnectionClosedError as e:
@@ -408,13 +429,29 @@ async def send_receive():
             return "stop"
         
 
-# if __name__ == '__main__':
-def main(dr):
-    global driver
-    driver = dr
-    # driver = driver
+if __name__ == '__main__':
+# def main():
+    # session_id = sys.argv[1]
+    # # options = sys.argv[2]
+    # executor_url = 'http://localhost/AutoCallResponder/'
+    # # # global driver
+    # chrome_options = Options()
+    # driver = WebDriver(command_executor=executor_url, options=chrome_options)
+    # driver.session_id = session_id
+    options = webdriver.ChromeOptions()
+    options.debugger_address = "localhost:9222"
+
+    driver = webdriver.Chrome(options=options)
+    # driver = sys.argv[1]
     while True:
+        print("second scrit>>>>>>>>>>")
         result = asyncio.run(send_receive())
         if result == "stop":
             print("Exiting main function.")
+            try:
+                driver.switch_to.default_content()
+                button = driver.find_element(By.XPATH, "//button[@id='copy_button']")
+                button.click()
+            except Exception as e:
+                print(f"Couldn't find button: {e}")
             break        
