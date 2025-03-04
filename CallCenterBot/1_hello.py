@@ -265,8 +265,9 @@ def handle_external_keyword_lists(driver, iframe_keywords=None):
                 #     purpose_audio = False
 
                 # Add a unique wait time for the keyword list
-                wait_time = external_keyword_lists[keyword_list_name]["wait_time"]
-                time.sleep(wait_time)
+                # wait_time = external_keyword_lists[keyword_list_name]["wait_time"]
+                # time.sleep(wait_time)
+                time.sleep(3)
 
                 # Switch back to the keyword extraction div
                 switch_to_iframe_hello(driver)
